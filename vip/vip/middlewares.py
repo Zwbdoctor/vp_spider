@@ -6,6 +6,9 @@
 # https://doc.scrapy.org/en/latest/topics/spider-middleware.html
 
 from scrapy import signals
+from scrapy.downloadermiddlewares.useragent import UserAgentMiddleware
+import base64
+import random
 
 
 class VipSpiderMiddleware(object):
@@ -101,3 +104,38 @@ class VipDownloaderMiddleware(object):
 
     def spider_opened(self, spider):
         spider.logger.info('Spider opened: %s' % spider.name)
+
+class VipProxyMiddleware(object):
+    """
+    代理中间件
+    """
+
+    proxyServer = "http://http-dyn.abuyun.com:9020"
+    p_user = '****************'
+    p_pass = '****************'
+
+    proxyAuth = "Basic " + base64.b64encode(bytearray("%s:%s" % (p_user, p_pass)))
+
+    # for Python3
+    # proxyAuth = "Basic " + base64.urlsafe_b64encode(bytes((p_user + ":" + p_pass), "ascii")).decode("utf8")
+
+    def process_request(self, request, spider):
+        request.meta['proxy'] = self.proxyServer
+        request.headers['Proxy-Authorization'] = self.proxyAuth
+
+
+class VipUserAgentMiddleware(UserAgentMiddleware):
+    """
+    user-agent池中间件
+    """
+
+    def __init__(self, user_agent):
+        self.user_agent = user_agent
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        return cls(crawler.settings.getlist('USER_AGENTS'))
+
+    def process_request(self, request, spider):
+        ua = random.choice(self.user_agent)
+        request.headers.setdefault('User-Agent', ua)
