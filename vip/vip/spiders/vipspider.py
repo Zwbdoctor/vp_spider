@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
-import scrapy
+# import scrapy
 from scrapy import Spider, Request
 import re
 import json
 # from scrapy.spiders.crawl import CrawlSpider, Rule, Request
 # from scrapy.linkextractors import LinkExtractor
-from chardet import detect
+# from chardet import detect
 # from items import VipItem
 
 
 class VipspiderSpider(Spider):
-# class VipspiderSpider(CrawlSpider):
+    # class VipspiderSpider(CrawlSpider):
     name = 'vipspider'
     allowed_domains = ['vip.com', 'detail.vip.com']
-    start_urls = ['http://category.vip.com/search-1-0-1.html?q=3|290322||&rp=288533|289925&ff=|0|6|1']
+    # start_urls = ['http://category.vip.com/search-1-0-1.html?q=3|290322||&rp=288533|289925&ff=|0|6|1']
 
     def start_requests(self):
         with open('./vip/spiders/url.dat', 'r') as f:
@@ -71,15 +71,40 @@ class VipspiderSpider(Spider):
     def parse_item(self, response):
         i = {}
         its = []
-        tr_list = response.xpath('//div[@class="dc-info clearfix"]//tr')
+        page = response.body.replace('\n', '').replace('\r', '').replace('\t', '')
+        page = re.sub(r'\s', '', page)
+        reg = r'<thclass="dc-table-tit">(.*?)</th><td>(.*?)</td>'
+        tr_list = re.findall(reg, page)
+        # tr_list = response.xpath('string(//div[@class="dc-info clearfix"]//tr)').extract()
         i['url'] = response.url
+        try:
+            i['goods_price'] = response.xpath('//*[@id="J-pi-price-box"]//em[@class="J-price"]/text()').extract()[0]
+        except:
+            i['goods_price'] = ''
+        tmaps = {'skin_type': '适用肤质', 'types': '类型', 'effect': '护理功效', 'brand_name': '品牌名称',
+                 'goods_name': '商品名称', 'goods_from': '产地', 'goods_num': '商品编号', 'goods_comments': '配件/备注',
+                 'specifications': '规格'}
         for e in tr_list:
-            ths = [x for x in e.xpath('.//th/text()').extract()]
-            tds = [x for x in e.xpath('.//td/text()').extract()]
-            d = ','.join(['%s%s' % (ths[t], tds[t]) for t in range(len(ths))])
-            its.append(d)
-        data = ','.join(its)
-        i['goods_info'] = data.encode('utf-8')
-        imgs = response.xpath('//div[@class="pic-sliderwrap"]//img/@data-original').extract()
-        i['goods_imgs'] = ','.join(['http:%s' % e for e in imgs])
+            if not e[0] or not e[1]:
+                continue
+            for k, v in tmaps.items():
+                if e[0].strip()[:-3] == v:
+                    i[k] = e[1]
+                    tmaps.pop(k)
+                    break
+                elif e[0].strip()[:-3] == '功效':
+                    i['effect'] = e[1]
+                    tmaps.pop('effect')
+                    break
+            else:
+                its.append('%s:%s' % (e[0][:-1], e[1]))
+        if len(tmaps.keys()) > 0:
+            for k in tmaps.keys():
+                i[k] = ''
+        i['extends'] = ','.join(its) if len(its) > 0 else ''
+        try:
+            imgs = response.xpath('//div[@class="pic-sliderwrap"]//img/@data-original').extract()
+            i['goods_imgs'] = ','.join(['http:%s' % e for e in imgs])
+        except:
+            i['goods_imgs'] = 'no imgs'
         return i

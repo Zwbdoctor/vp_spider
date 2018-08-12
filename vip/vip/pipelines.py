@@ -32,6 +32,9 @@ class VipPipeline(object):
         spider.logger.error(failure)
 
     def do_insert(self, cursor, item):
-        sql = """insert into products(`goods_info`, `img_urls`) values(%s, %s);"""
-        params = (item['goods_info'], item['goods_imgs'])
+        sql = """insert into products_v2(`goods_name`, `goods_price`, `skin_type`, `goods_type`, `effect`, `brand_name`, `goods_from`,
+        `goods_num`, `goods_comments`, `specifications`, `goods_url`, `img_urls`) values(%s, %s, %s, %s, %s, %s, %s, %s,
+        %s, %s, %s, %s);"""
+        params = (item['goods_name'], item['goods_price'], item['skin_type'], item['types'], item['effect'], item['brand_name'], item['goods_from'],
+                  item['goods_num'], item['goods_comments'], item['specifications'], item['url'], item['goods_imgs'])
         cursor.execute(sql, params)
