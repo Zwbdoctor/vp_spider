@@ -14,6 +14,8 @@ BOT_NAME = 'vip'
 SPIDER_MODULES = ['vip.spiders']
 NEWSPIDER_MODULE = 'vip.spiders'
 
+LOG_FILE = 'vip.log'
+
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'vip (+http://www.yourdomain.com)'
@@ -47,7 +49,7 @@ USER_AGENTS = [
 # Configure a delay for requests for the same website (default: 0)
 # See https://doc.scrapy.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
-DOWNLOAD_DELAY = 2
+DOWNLOAD_DELAY = 0.3
 # The download delay setting will honor only one of:
 #CONCURRENT_REQUESTS_PER_DOMAIN = 16
 #CONCURRENT_REQUESTS_PER_IP = 16
@@ -77,7 +79,7 @@ DEFAULT_REQUEST_HEADERS = {
 DOWNLOADER_MIDDLEWARES = {
 #    'vip.middlewares.VipDownloaderMiddleware': 543,
     'scrapy.downloadermiddlewares.retry.RetryMiddleware': 100,
-    # 'vip.middlewares.VipProxyMiddleware': 200,
+    'vip.middlewares.VipProxyMiddleware': 200,
     'vip.middlewares.VipUserAgentMiddleware': 300,
 }
 
@@ -89,9 +91,9 @@ DOWNLOADER_MIDDLEWARES = {
 
 # Configure item pipelines
 # See https://doc.scrapy.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    'vip.pipelines.VipPipeline': 300,
-#}
+ITEM_PIPELINES = {
+   'vip.pipelines.VipPipeline': 300,
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://doc.scrapy.org/en/latest/topics/autothrottle.html

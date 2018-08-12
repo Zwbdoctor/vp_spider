@@ -15,24 +15,27 @@ class VipspiderSpider(Spider):
     allowed_domains = ['vip.com', 'detail.vip.com']
     start_urls = ['http://category.vip.com/search-1-0-1.html?q=3|290322||&rp=288533|289925&ff=|0|6|1']
 
-    # def start_requests(self):
-    #     with open('./vip/spiders/url.dat', 'r') as f:
-    #         urls = f.read().split('\n')
-    #     for u in urls:
-    #         yield Request(u, callback=self.page_list)
+    def start_requests(self):
+        with open('./vip/spiders/url.dat', 'r') as f:
+            urls = f.read().split('\n')
+        for u in urls:
+            yield Request(u, callback=self.parse)
     
-    def page_list(self, response):
+    def parse(self, response):
         c_url = response.url
-        total_page = int(response.xpath('//span[@class="total-item-nums"]/text()').extract()[0][1:-1])
+        try:
+            total_page = int(response.xpath('//span[@class="total-item-nums"]/text()').extract()[0][1:-1])
+        except:
+            return 
         reg = r'search-1-0-\d+'
         for i in range(total_page):
-            url = re.sub(reg, 'search-1-0-%s' % str(i), c_url)
+            url = re.sub(reg, 'search-1-0-%s' % str(i+1), c_url)
             yield Request(url, callback=self.deal_plist)
     
     def deal_plist(self, response):
         reg = r'"productIds":(.*?),"cateName"'
         plist = re.search(reg, response.body).group(1)[1:-1].strip().replace('"', '').split(',')
-        print(plist)
+        # print(plist)
         if len(plist) > 50:
             le = len(plist)
             p = [plist[:le/2], plist[le/2:]]
@@ -69,13 +72,14 @@ class VipspiderSpider(Spider):
         i = {}
         its = []
         tr_list = response.xpath('//div[@class="dc-info clearfix"]//tr')
+        i['url'] = response.url
         for e in tr_list:
             ths = [x for x in e.xpath('.//th/text()').extract()]
             tds = [x for x in e.xpath('.//td/text()').extract()]
-            d = ','.join(['%s:%s' % (ths[t], tds[t]) for t in range(len(ths))])
+            d = ','.join(['%s%s' % (ths[t], tds[t]) for t in range(len(ths))])
             its.append(d)
         data = ','.join(its)
-        i['goods_info'] = data
+        i['goods_info'] = data.encode('utf-8')
         imgs = response.xpath('//div[@class="pic-sliderwrap"]//img/@data-original').extract()
         i['goods_imgs'] = ','.join(['http:%s' % e for e in imgs])
         return i

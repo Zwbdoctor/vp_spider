@@ -111,8 +111,8 @@ class VipProxyMiddleware(object):
     """
 
     proxyServer = "http://http-dyn.abuyun.com:9020"
-    p_user = '****************'
-    p_pass = '****************'
+    p_user = 'H15EK0717042RY6D'
+    p_pass = '077EE9B65130A2BF'
 
     proxyAuth = "Basic " + base64.b64encode(bytearray("%s:%s" % (p_user, p_pass)))
 
